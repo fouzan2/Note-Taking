@@ -1,0 +1,327 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# FastAPI Enterprise Development Standards
+
+## Core Principles
+- Use FastAPI with async/await patterns for optimal performance
+- Follow modular project structure with clear separation of concerns
+- Implement stateless API design for horizontal scalability
+- Use JWT token authentication for secure user sessions
+- Support multiple client types: mobile, desktop, web applications
+- Design for enterprise-level reliability and maintainability
+
+## FastAPI Implementation Standards
+- Always use dependency injection for database sessions and authentication
+- Implement async route handlers: `async def create_note(note_data: NoteCreate)`
+- Use Pydantic models for request/response validation and serialization
+- Implement comprehensive error handling with custom exception classes
+- Add detailed docstrings and type hints for all functions
+- Use FastAPI's automatic OpenAPI documentation generation
+
+## Route Handler Standards
+```python
+@router.post("/notes/", response_model=NoteResponse, status_code=201)
+async def create_note(
+    note_data: NoteCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> NoteResponse:
+    """
+    Create a new note with associated tags.
+    
+    Args:
+        note_data: Note creation data including title, content, and tags
+        current_user: Authenticated user from JWT token
+        db: Database session dependency
+        
+    Returns:
+        Created note with associated metadata
+        
+    Raises:
+        ValidationError: Invalid input data
+        AuthenticationError: Invalid or expired token
+    """
+```
+
+## Pydantic Models & Validation
+- Create separate models for Create, Update, and Response operations
+- Use `BaseModel` for all data transfer objects
+- Implement custom validators using `@field_validator` decorator
+- Use `@model_validator` for cross-field validation logic
+- Implement proper error messages with detailed validation feedback
+- Use `Field()` for advanced validation constraints and documentation
+
+```python
+class NoteCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200, description="Note title")
+    content: str = Field(..., min_length=1, description="Note content")
+    tags: List[str] = Field(default_factory=list, description="Associated tags")
+    
+    @field_validator('tags')
+    @classmethod
+    def validate_tags(cls, v):
+        if len(v) > 10:
+            raise ValueError('Maximum 10 tags allowed per note')
+        return [tag.strip().lower() for tag in v if tag.strip()]
+```
+
+## Authentication & Security
+- Use JWT tokens with proper expiration and refresh mechanisms
+- Implement OAuth2 with Password Bearer token scheme
+- Create custom permission decorators for role-based access control
+- Validate all input data using Pydantic models at multiple layers
+- Implement rate limiting using slowapi middleware
+- Log all authentication and authorization events with structured logging
+
+## Database & Models (SQLAlchemy Async)
+- Use SQLAlchemy async ORM with declarative base models
+- Implement proper model relationships with `relationship()` and foreign keys
+- Use abstract base models for common fields (id, created_at, updated_at)
+- Create custom repository classes for complex query patterns
+- Implement database indexes for frequently queried fields
+- Use async session management with proper connection pooling
+
+```python
+class Note(Base):
+    __tablename__ = "notes"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default_factory=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default_factory=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="notes")
+    tags: Mapped[List["Tag"]] = relationship("Tag", secondary="note_tags", back_populates="notes")
+```
+
+## Background Tasks & Celery Integration
+- Use FastAPI's BackgroundTasks for lightweight async operations
+- Integrate Celery for heavy computational tasks and scheduled jobs
+- Group tasks by business domain in separate modules
+- Use descriptive task names: `send_welcome_email`, `process_note_export`
+- Implement exponential backoff retry strategies with max retry limits
+- Use multiple queues for different priority levels (high, normal, low)
+- Implement comprehensive task monitoring and logging
+
+## Redis Integration & Caching
+- Use Redis for session storage, caching, and rate limiting
+- Implement consistent cache key naming: `user:{user_id}:notes`, `note:{note_id}`
+- Store temporary data (JWT refresh tokens, password reset tokens) with TTL
+- Use connection pooling with redis-py for optimal performance
+- Implement multi-level caching strategies (in-memory, Redis, database)
+- Handle Redis connection failures gracefully with database fallbacks
+
+## API Design Standards
+- Use RESTful URL patterns: `/api/v1/notes/`, `/api/v1/notes/{note_id}/tags/`
+- Implement proper HTTP method usage for CRUD operations
+- Use appropriate HTTP status codes consistently (200, 201, 400, 401, 404, 422, 500)
+- Implement cursor-based pagination for large datasets using `limit` and `offset`
+- Support advanced filtering, full-text search, and sorting capabilities
+- Maintain consistent response format across all endpoints with metadata
+
+## Response Format Standards
+```python
+# Success Response Schema
+class SuccessResponse(BaseModel):
+    success: bool = True
+    data: Any
+    message: str
+    meta: ResponseMeta
+
+class ResponseMeta(BaseModel):
+    timestamp: datetime
+    request_id: str
+    total_count: Optional[int] = None
+    page: Optional[int] = None
+    per_page: Optional[int] = None
+
+# Error Response Schema  
+class ErrorResponse(BaseModel):
+    success: bool = False
+    error: ErrorDetail
+    meta: ResponseMeta
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    details: Optional[Dict[str, Any]] = None
+```
+
+## Dependency Injection Patterns
+- Create reusable dependencies for database sessions, authentication, and permissions
+- Use FastAPI's dependency injection system for clean separation of concerns
+- Implement caching at the dependency level for frequently accessed data
+- Create factory functions for complex dependency configurations
+- Use dependency overrides for testing different scenarios
+
+```python
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """Extract and validate current user from JWT token."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise AuthenticationError("Invalid token")
+        
+        user = await get_user_by_id(db, user_id)
+        if user is None:
+            raise AuthenticationError("User not found")
+        return user
+    except JWTError:
+        raise AuthenticationError("Invalid token")
+```
+
+## Code Quality Standards
+- Follow PEP 8 style guidelines with Black formatter
+- Use comprehensive type hints for all function parameters and return values
+- Implement detailed docstrings following Google or NumPy documentation style
+- Use meaningful variable and function names that express business intent
+- Keep functions focused on single responsibility (max 20-30 lines)
+- Implement proper exception handling with custom exception classes
+
+## Testing Requirements
+- Write comprehensive unit tests using pytest and pytest-asyncio
+- Test all API endpoints with proper authentication and authorization
+- Use TestClient for integration testing of FastAPI routes
+- Mock external dependencies (Redis, Celery, external APIs) in tests
+- Implement database fixtures with proper setup and teardown
+- Maintain minimum 90% code coverage for enterprise applications
+- Use descriptive test names that explain business scenarios
+
+## Performance Optimization
+- Use async/await patterns throughout the application stack
+- Implement connection pooling for database and Redis connections
+- Use `select` and `joinedload` for eager loading of related data  
+- Implement multi-level caching strategies (application, Redis, CDN)
+- Use bulk operations for large dataset manipulations
+- Monitor and optimize slow database queries with query analysis
+- Implement proper database indexing strategies for search and filtering
+## Security Implementation
+- Validate and sanitize all user input using Pydantic models
+- Use parameterized queries to prevent SQL injection attacks
+- Implement proper CORS configuration for cross-origin requests
+- Use security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
+- Encrypt sensitive data at rest using field-level encryption
+- Implement comprehensive audit logging for security events
+- Use secure password hashing with bcrypt or Argon2
+
+## Alembic Migration Management
+- Use Alembic for all database schema changes and version control
+- Create descriptive migration names: `add_note_tags_relationship`
+- Implement both upgrade and downgrade functions for all migrations
+- Use async migration scripts for database operations
+- Test migrations in development environment before production deployment
+- Maintain migration history and rollback procedures
+
+## Cross-Platform API Considerations
+- Design APIs to be platform-agnostic with consistent behavior
+- Optimize response payload sizes for mobile network constraints
+- Support offline synchronization capabilities with conflict resolution
+- Handle large file uploads with multipart form data and progress tracking
+- Implement proper CORS configuration for web application integration
+- Support real-time features using WebSockets for live collaboration
+
+## Docker & Deployment
+- Use multi-stage Docker builds for optimized production images
+- Implement proper environment variable management with validation
+- Use docker-compose for local development with all services
+- Implement comprehensive health checks for container orchestration
+- Use proper secrets management with external secret stores
+- Implement structured logging with centralized log aggregation
+
+## Monitoring & Observability
+- Use structured logging in JSON format with correlation IDs
+- Include request context (user_id, request_id, endpoint) in all logs
+- Implement comprehensive health check endpoints for all dependencies
+- Monitor API response times, error rates, and business metrics
+- Track database query performance and connection pool usage
+- Set up alerts for critical errors, performance degradation, and security events
+- Implement distributed tracing for complex request flows
+
+## Error Handling Patterns
+- Create custom exception classes for different error categories
+- Use FastAPI's exception handlers for consistent error responses
+- Log errors with appropriate severity levels and context information
+- Return user-friendly error messages without exposing internal details
+- Implement proper HTTP status codes for different error scenarios
+- Handle database connection errors with retry logic and circuit breakers
+- Implement graceful degradation for external service failures
+
+## Development Workflow
+- Follow GitFlow with meaningful commit messages and conventional commits
+- Use feature branches for new development with pull request reviews
+- Implement pre-commit hooks for code formatting and linting
+- Run automated tests on every commit with CI/CD pipeline integration
+- Use automated code quality tools (mypy, flake8, bandit)
+- Document API changes in changelog with breaking change notifications
+- Implement automated dependency updates with security vulnerability scanning
+
+## Project Structure
+```
+note_taking_api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI application initialization
+│   ├── core/
+│   │   ├── config.py        # Settings and configuration
+│   │   ├── security.py      # Authentication and authorization
+│   │   └── database.py      # Database connection and session management
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py          # User SQLAlchemy model
+│   │   ├── note.py          # Note SQLAlchemy model
+│   │   └── tag.py           # Tag SQLAlchemy model
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── user.py          # User Pydantic models
+│   │   ├── note.py          # Note Pydantic models
+│   │   └── tag.py           # Tag Pydantic models
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── deps.py          # Dependency injection functions
+│   │   └── v1/
+│   │       ├── __init__.py
+│   │       ├── auth.py      # Authentication endpoints
+│   │       ├── notes.py     # Note management endpoints
+│   │       └── tags.py      # Tag management endpoints
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth_service.py  # Authentication business logic
+│   │   ├── note_service.py  # Note management business logic
+│   │   └── tag_service.py   # Tag management business logic
+│   └── utils/
+│       ├── __init__.py
+│       ├── exceptions.py    # Custom exception classes
+│       └── helpers.py       # Utility functions
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py          # Pytest configuration and fixtures
+│   ├── test_auth.py         # Authentication tests
+│   ├── test_notes.py        # Note management tests
+│   └── test_tags.py         # Tag management tests
+├── alembic/                 # Database migration files
+├── docker-compose.yml       # Local development environment
+├── Dockerfile              # Production container image
+├── requirements.txt        # Python dependencies
+└── README.md               # Project documentation
+```
+
+When implementing any feature, always consider:
+
+1. **Security implications** - Implement proper authentication, authorization, input validation, and audit logging
+2. **Performance impact** - Use async patterns, connection pooling, caching strategies, and query optimization
+3. **Error handling** - Create comprehensive exception handling with proper logging and user-friendly messages
+4. **Testing coverage** - Write unit tests, integration tests, and end-to-end tests with proper mocking
+5. **Documentation** - Maintain up-to-date API documentation, code comments, and deployment guides
+6. **Cross-platform compatibility** - Design APIs that work seamlessly across mobile, desktop, and web platforms
+7. **Scalability planning** - Implement stateless design, caching strategies, and database optimization for future growth
+8. **Monitoring readiness** - Include proper logging, metrics collection, and health checks for production monitoring

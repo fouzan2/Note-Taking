@@ -1,0 +1,44 @@
+# Core dependencies
+fastapi
+uvicorn[standard]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+python-dotenv
+
+# Production server
+gunicorn
+
+# Database
+sqlalchemy[asyncio]
+asyncpg
+aiosqlite
+alembic
+
+# Redis (for caching and session management)
+redis
+
+# Celery (for background tasks)
+celery
+flower
+
+# Pydantic
+pydantic
+pydantic-settings
+email-validator
+
+# Monitoring and logging
+prometheus-client
+sentry-sdk[fastapi]
+
+# Security
+slowapi  # Rate limiting
+
+# Development tools
+pytest
+pytest-asyncio
+httpx
+black
+flake8
+mypy
+coverage

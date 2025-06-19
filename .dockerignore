@@ -1,0 +1,80 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyo
+*.pyd
+.pytest_cache/
+*.coverage
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Docker files (avoid recursion)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# Development files
+*.log
+*.sqlite
+*.db
+.env.local
+.env.development
+.env.test
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Test files
+tests/
+pytest.ini
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+tmp/
+temp/
+logs/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Alembic local database
+alembic.ini.local
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Other
+.cursor/ 
