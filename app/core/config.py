@@ -2,7 +2,7 @@
 Application configuration management using Pydantic settings.
 """
 import json
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 from pydantic import field_validator, ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -35,12 +35,12 @@ class Settings(BaseSettings):
     # Redis Configuration (optional)
     REDIS_URL: Optional[str] = None
     
-    # CORS Configuration
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    # CORS Configuration - using Any to prevent automatic JSON parsing
+    BACKEND_CORS_ORIGINS: Any = ["*"]
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str], None]) -> List[str]:
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
         """
         Parse CORS origins from environment variable.
         Supports JSON array format, comma-separated string, or fallback to default.
@@ -53,8 +53,14 @@ class Settings(BaseSettings):
             return v
         
         if isinstance(v, str):
+            # Clean up the value - remove @ symbol and extra whitespace
+            v = v.strip()
+            if v.startswith("@"):
+                v = v[1:]  # Remove @ symbol
+            v = v.strip()
+            
             # First try to parse as JSON array
-            if v.strip().startswith("[") and v.strip().endswith("]"):
+            if v.startswith("[") and v.endswith("]"):
                 try:
                     parsed = json.loads(v)
                     if isinstance(parsed, list):
