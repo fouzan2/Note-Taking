@@ -49,8 +49,15 @@ ENVIRONMENT=production
 DEBUG=false
 API_V1_STR=/api/v1
 
-# CORS (update with your domains)
-BACKEND_CORS_ORIGINS=["https://your-app.up.railway.app"]
+# CORS Configuration (Choose ONE format):
+# Option 1: JSON Array (recommended)
+BACKEND_CORS_ORIGINS=["https://your-app.up.railway.app","https://your-frontend.vercel.app"]
+
+# Option 2: Comma-separated (easier to edit in Railway UI)
+# BACKEND_CORS_ORIGINS=https://your-app.up.railway.app,https://your-frontend.vercel.app
+
+# Option 3: Leave empty for development defaults
+# BACKEND_CORS_ORIGINS=
 
 # Optional Email (for notifications)
 SMTP_HOST=smtp.gmail.com
@@ -159,7 +166,17 @@ railway logs
    - Check if migrations run on deploy
    - Can run manually: `railway run alembic upgrade head`
 
-4. **Memory Issues**
+4. **BACKEND_CORS_ORIGINS Parsing Error**
+   ```
+   JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+   ```
+   **Solutions:**
+   - Set the variable in Railway Dashboard using JSON format: `["https://your-domain.com"]`
+   - Or use comma-separated format: `https://domain1.com,https://domain2.com`
+   - Or leave empty to use development defaults
+   - Ensure no extra spaces or invalid characters
+
+5. **Memory Issues**
    - Adjust worker count in start command
    - Monitor memory usage in Railway dashboard
 

@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     
     # Redis Configuration (optional)
     REDIS_URL: Optional[str] = None
+    REDIS_MAX_CONNECTIONS: int = 20
+    REDIS_RETRY_ON_TIMEOUT: bool = True
+    REDIS_HEALTH_CHECK_INTERVAL: int = 30
+    
+    # Cache Configuration
+    CACHE_TTL_SECONDS: int = 300  # 5 minutes default
+    CACHE_KEY_PREFIX: str = "note_api"
     
     # CORS Configuration - using Any to prevent automatic JSON parsing
     BACKEND_CORS_ORIGINS: Any = ["*"]

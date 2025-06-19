@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.redis import RedisCache
 from app.schemas.note import NoteCreate, NoteUpdate, NoteResponse, NoteListResponse
 from app.services import note_service
 from app.api.deps import get_current_user, PaginationParams
@@ -36,6 +37,11 @@ async def create_note(
         AuthenticationError: Invalid or expired token
     """
     note = await note_service.create_note(db, note_data, current_user.id)
+    
+    # Cache the created note
+    cache_key = f"note:{note.id}:user:{current_user.id}"
+    await RedisCache.set(cache_key, note.__dict__, ttl=600)  # Cache for 10 minutes
+    
     return NoteResponse.from_orm(note)
 
 
@@ -58,6 +64,15 @@ async def get_notes(
     Returns:
         Paginated list of notes
     """
+    # Create cache key for this specific query
+    cache_key = f"notes:user:{current_user.id}:page:{pagination.page}:tag:{tag or 'all'}"
+    
+    # Try to get from cache first
+    cached_result = await RedisCache.get(cache_key)
+    if cached_result:
+        return NoteListResponse(**cached_result)
+    
+    # Get from database
     notes, total = await note_service.get_notes(
         db,
         current_user.id,
@@ -68,13 +83,18 @@ async def get_notes(
     
     total_pages = (total + pagination.per_page - 1) // pagination.per_page
     
-    return NoteListResponse(
+    result = NoteListResponse(
         notes=[NoteResponse.from_orm(note) for note in notes],
         total=total,
         page=pagination.page,
         per_page=pagination.per_page,
         total_pages=total_pages
     )
+    
+    # Cache the result for 5 minutes
+    await RedisCache.set(cache_key, result.dict(), ttl=300)
+    
+    return result
 
 
 @router.get("/search", response_model=NoteListResponse)
@@ -122,7 +142,7 @@ async def get_note(
     db: AsyncSession = Depends(get_db)
 ) -> NoteResponse:
     """
-    Get a specific note by ID.
+    Get a specific note by ID with Redis caching.
     
     Args:
         note_id: Note ID
@@ -136,7 +156,19 @@ async def get_note(
         NotFoundError: Note not found
         AuthorizationError: User doesn't own the note
     """
+    # Try to get from cache first
+    cache_key = f"note:{note_id}:user:{current_user.id}"
+    cached_note = await RedisCache.get(cache_key)
+    
+    if cached_note:
+        return NoteResponse(**cached_note)
+    
+    # Get from database
     note = await note_service.get_note_by_id(db, note_id, current_user.id)
+    
+    # Cache the note for 10 minutes
+    await RedisCache.set(cache_key, note.__dict__, ttl=600)
+    
     return NoteResponse.from_orm(note)
 
 
@@ -165,6 +197,17 @@ async def update_note(
         ValidationError: Invalid update data
     """
     note = await note_service.update_note(db, note_id, note_update, current_user.id)
+    
+    # Invalidate caches for this note and user's note lists
+    cache_key = f"note:{note_id}:user:{current_user.id}"
+    await RedisCache.delete(cache_key)
+    
+    # Clear user's note list caches (all pages and tag filters)
+    await RedisCache.clear_pattern(f"notes:user:{current_user.id}:*")
+    
+    # Cache the updated note
+    await RedisCache.set(cache_key, note.__dict__, ttl=600)
+    
     return NoteResponse.from_orm(note)
 
 
@@ -186,4 +229,11 @@ async def delete_note(
         NotFoundError: Note not found
         AuthorizationError: User doesn't own the note
     """
-    await note_service.delete_note(db, note_id, current_user.id) 
+    await note_service.delete_note(db, note_id, current_user.id)
+    
+    # Invalidate caches for this note and user's note lists
+    cache_key = f"note:{note_id}:user:{current_user.id}"
+    await RedisCache.delete(cache_key)
+    
+    # Clear user's note list caches (all pages and tag filters)
+    await RedisCache.clear_pattern(f"notes:user:{current_user.id}:*") 

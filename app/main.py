@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.redis import init_redis, close_redis, redis_health_check
 from app.api.v1 import api_router
 from app.utils.exceptions import BaseAPIException
 
@@ -19,9 +20,11 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     await init_db()
+    await init_redis()
     yield
     # Shutdown
     await close_db()
+    await close_redis()
 
 
 # Create FastAPI app
@@ -83,9 +86,20 @@ async def root():
 @app.get("/health")
 async def health_check():
     """
-    Health check endpoint.
+    Health check endpoint with database and Redis status.
     """
-    return {
+    health_status = {
         "status": "healthy",
-        "version": settings.VERSION
-    } 
+        "version": settings.VERSION,
+        "services": {
+            "database": "healthy",  # TODO: Add actual DB health check
+            "redis": await redis_health_check()
+        }
+    }
+    
+    # Determine overall health
+    redis_status = health_status["services"]["redis"]["status"]
+    if redis_status == "unhealthy" and settings.REDIS_URL:
+        health_status["status"] = "degraded"
+    
+    return health_status 
