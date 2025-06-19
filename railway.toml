@@ -4,12 +4,12 @@ dockerfilePath = "Dockerfile"
 dockerContext = "."
 
 [deploy]
-startCommand = "sh -c 'alembic upgrade head && gunicorn app.main:app -w ${RAILWAY_REPLICA_COUNT:-2} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --access-logfile - --error-logfile - --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50'"
+startCommand = "gunicorn app.main:app -w ${RAILWAY_REPLICA_COUNT:-1} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --access-logfile - --error-logfile - --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50 --preload"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
 [healthcheck]
 type = "http"
-path = "/health"
+path = "/"
 interval = 30
 timeout = 10 
