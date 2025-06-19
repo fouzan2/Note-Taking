@@ -113,7 +113,7 @@ services:
       - note_network
     command: celery -A app.core.celery_app beat --loglevel=info
 
-  # Flower (Celery Monitoring)
+  # Flower (Celery Web UI)
   flower:
     build:
       context: .

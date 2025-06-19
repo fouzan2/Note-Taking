@@ -51,6 +51,8 @@ dmypy.json
 # Environment Variables
 .env
 .env.local
+.env.development.local
+.env.test.local
 .env.production
 
 # Logs
@@ -62,8 +64,23 @@ logs/
 Thumbs.db
 
 # Alembic
-alembic/versions/*.py
+!alembic/versions/*.py
+alembic/versions/__pycache__/
 
 # Application specific
 note_taking.db
-test_note_taking.db 
+test_note_taking.db
+
+# Google Cloud Platform
+*.json  # Service account keys
+github-sa-key.json
+gcp-key.json
+service-account-key.json
+
+# Backup files
+backup_*.sql
+*.bak
+
+# Deployment temporary files
+deploy/*.log
+.gcloud/ 

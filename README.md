@@ -21,8 +21,7 @@ A robust and scalable RESTful API for managing personal notes with tag support, 
 - **Type Safety**: Comprehensive type hints and Pydantic validation
 - **Testing**: Pytest with async support and fixtures
 - **Error Handling**: Custom exception classes with proper HTTP status codes
-- **Docker Support**: Full Docker and Docker Compose configuration
-- **Production Ready**: Nginx, Gunicorn, and monitoring tools included
+- **Docker Support**: Full Docker and Docker Compose configuration for local development
 
 ## 📋 Requirements
 
@@ -43,12 +42,8 @@ cd note_taking
 ### 2. Setup Environment
 
 ```bash
-# Run the setup command to create necessary directories and files
-make setup
-
-# Or manually:
-cp env.development.example .env.development
-cp env.production.example .env.production
+# Copy the development environment example
+cp .env.development.example .env.development
 ```
 
 ### 3. Start Development Environment
@@ -66,7 +61,7 @@ This will start:
 - PostgreSQL database
 - Redis for caching
 - pgAdmin at http://localhost:5050
-- Flower (Celery monitoring) at http://localhost:5555
+- Flower (Celery web UI) at http://localhost:5555
 
 ### 4. Run Database Migrations
 
@@ -104,7 +99,7 @@ pip install -r requirements.txt
 
 ### 4. Environment Setup
 
-Create a `.env` file in the project root based on `env.development.example`.
+Create a `.env.development` file in the project root based on `.env.development.example`.
 
 ### 5. Database Setup
 
@@ -253,18 +248,24 @@ note_taking/
 ├── alembic/
 │   ├── env.py               # Alembic environment configuration
 │   └── script.py.mako       # Migration template
-├── nginx/                   # Nginx configuration
-│   ├── nginx.conf
-│   └── conf.d/
-│       └── app.conf
+├── deploy/                  # GCP deployment files
+│   ├── setup-gcp.sh         # Infrastructure setup script
+│   ├── deploy.sh            # Deployment script
+│   ├── cloud-run-service.yaml # Cloud Run configuration
+│   ├── env.production.example # Production environment example
+│   └── README.md            # Deployment documentation
+├── .github/
+│   └── workflows/
+│       └── deploy-gcp.yml   # GitHub Actions deployment workflow
 ├── docker-compose.yml       # Development environment
-├── docker-compose.prod.yml  # Production environment
-├── Dockerfile              # Multi-stage Docker build
-├── Makefile               # Convenience commands
+├── Dockerfile               # Development Docker image
+├── Dockerfile.production    # Production Docker image
+├── cloudbuild.yaml         # Google Cloud Build configuration
+├── Makefile                # Convenience commands
 ├── alembic.ini            # Alembic configuration
 ├── requirements.txt       # Python dependencies
-├── env.development.example # Development environment example
-├── env.production.example  # Production environment example
+├── requirements-prod.txt  # Production dependencies (without Celery)
+├── .env.development.example # Development environment example
 └── README.md              # This file
 ```
 
@@ -285,100 +286,71 @@ make shell         # Open shell in app container
 make db-shell      # Open PostgreSQL shell
 make migrate       # Run database migrations
 
-# Production commands
-make prod-build    # Build production images
-make prod-up       # Start production environment
-make prod-down     # Stop production environment
-make prod-logs     # Show production logs
-
 # Utility commands
 make clean         # Clean up containers and volumes
 make backup        # Create database backup
 make restart       # Restart all containers
 ```
 
-## 🚀 Production Deployment
+## ☁️ Google Cloud Platform Deployment
 
-### Using Docker Compose (Production)
+The application is optimized for deployment to Google Cloud Run with Cloud SQL and Memorystore Redis.
 
-1. **Prepare Production Environment**:
+### Prerequisites
 
-```bash
-# Create secrets directory
-mkdir -p secrets
+- Google Cloud account with billing enabled
+- `gcloud` CLI installed and configured
+- Docker installed locally
 
-# Create secret files (replace with actual values)
-echo "prod_user" > secrets/postgres_user.txt
-echo "strong_password" > secrets/postgres_password.txt
-echo "your-secret-key" > secrets/secret_key.txt
-echo "your-jwt-secret" > secrets/jwt_secret.txt
-echo "admin" > secrets/grafana_user.txt
-echo "admin_password" > secrets/grafana_password.txt
-```
+### Quick Deployment
 
-2. **Update Production Configuration**:
+1. **Set up GCP infrastructure**:
+   ```bash
+   export PROJECT_ID=your-gcp-project-id
+   export REGION=us-central1
+   make gcp-setup
+   ```
 
-Edit `.env.production` with your production values.
+2. **Deploy the application**:
+   ```bash
+   make gcp-deploy
+   ```
 
-3. **Start Production Services**:
-
-```bash
-# Build and start production services
-make prod-up
-
-# Or:
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-This will start:
-- FastAPI application with Gunicorn (4 workers)
-- PostgreSQL database
-- Redis with persistence
-- Nginx reverse proxy
-- Celery workers and beat scheduler
-- Prometheus monitoring
-- Grafana dashboards
+3. **View deployment status**:
+   ```bash
+   make gcp-status
+   ```
 
 ### Production Features
 
-- **Load Balancing**: Nginx reverse proxy with rate limiting
-- **Security**: Non-root containers, secret management, HTTPS ready
-- **Monitoring**: Prometheus metrics and Grafana dashboards
-- **Logging**: Structured JSON logging with log rotation
-- **Performance**: Multi-worker Gunicorn, connection pooling, caching
-- **Reliability**: Health checks, automatic restarts, resource limits
+- **Auto-scaling**: Scales from 1 to 10 instances based on load
+- **Managed services**: Uses Cloud SQL for PostgreSQL and Memorystore for Redis
+- **Security**: Secrets stored in Google Secret Manager
+- **CI/CD**: GitHub Actions workflow for automatic deployments
+- **Monitoring**: Integrated with Google Cloud Logging and monitoring
 
-### SSL/HTTPS Configuration
+### GCP Commands
 
-To enable HTTPS in production:
+```bash
+# GCP deployment commands
+make gcp-setup       # Set up GCP infrastructure
+make gcp-build       # Build production Docker image
+make gcp-deploy      # Deploy to Google Cloud Run
+make gcp-logs        # View Cloud Run logs
+make gcp-migrate     # Run migrations on Cloud SQL
+make gcp-status      # Check service status
+make gcp-test        # Test production deployment
+```
 
-1. Place your SSL certificates in `nginx/ssl/`
-2. Uncomment the SSL configuration in `nginx/conf.d/app.conf`
-3. Update the server_name with your domain
-4. Restart the Nginx container
+### Cost Optimization
 
-### 🚄 Railway Deployment
+The deployment is configured for cost efficiency:
+- Cloud Run bills only for actual usage
+- Minimum 1 instance to avoid cold starts
+- Optimized container size for faster scaling
+- Proper resource limits to prevent overuse
 
-Railway provides a modern, simplified deployment experience. See our detailed [Railway Deployment Guide](RAILWAY_DEPLOYMENT.md) for step-by-step instructions.
-
-**Quick Deploy to Railway:**
-
-1. Push your code to GitHub
-2. Connect Railway to your GitHub repo
-3. Add PostgreSQL and Redis services
-4. Set environment variables:
-   ```bash
-   # Generate secure key
-   openssl rand -hex 32
-   ```
-5. Deploy! Railway handles the rest
-
-Railway automatically provides:
-- HTTPS/SSL certificates
-- PostgreSQL and Redis databases
-- Automatic deployments from GitHub
-- Built-in monitoring and logs
-- Easy scaling options
+For detailed deployment instructions, see [deploy/README.md](deploy/README.md).
 
 ## 💡 Usage Examples
 
@@ -440,7 +412,7 @@ notes = response.json()
 
 ### Development Environment
 
-Key environment variables for development (see `env.development.example`):
+Key environment variables for development (see `.env.development.example`):
 
 - `DATABASE_URL`: PostgreSQL connection string
 - `REDIS_URL`: Redis connection string
@@ -448,33 +420,13 @@ Key environment variables for development (see `env.development.example`):
 - `DEBUG`: Enable debug mode
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
 
-### Production Environment
-
-Additional production variables (see `env.production.example`):
-
-- `SENTRY_DSN`: Error tracking with Sentry
-- `ENABLE_HTTPS`: Force HTTPS redirects
-- `RATE_LIMIT_*`: Rate limiting configuration
-- `BACKUP_*`: Automated backup settings
-
-### Railway Environment
-
-Railway-specific variables (see `railway-env.example`):
-
-- Railway provides `DATABASE_URL` and `REDIS_URL` automatically
-- `PORT` is dynamically assigned by Railway
-- See [Railway Deployment Guide](RAILWAY_DEPLOYMENT.md) for details
-
 ## 🔒 Security Considerations
 
 1. **Environment Variables**: Never commit `.env` files with real credentials
-2. **Secret Key**: Use a strong, random secret key in production
+2. **Secret Key**: Use a strong, random secret key
 3. **Password Requirements**: Enforces strong passwords with complexity requirements
-4. **HTTPS**: Always use HTTPS in production
-5. **Rate Limiting**: Implemented at Nginx level for production
-6. **Input Validation**: All inputs are validated using Pydantic models
-7. **SQL Injection**: Protected by SQLAlchemy ORM and parameterized queries
-8. **Container Security**: Non-root users, minimal base images
+4. **Input Validation**: All inputs are validated using Pydantic models
+5. **SQL Injection**: Protected by SQLAlchemy ORM and parameterized queries
 
 ## 🤝 Contributing
 

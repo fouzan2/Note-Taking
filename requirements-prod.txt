@@ -12,15 +12,10 @@ gunicorn
 # Database
 sqlalchemy[asyncio]
 asyncpg
-aiosqlite
 alembic
 
 # Redis (for caching and session management)
 redis
-
-# Celery (for background tasks)
-celery[redis]
-flower
 
 # Pydantic
 pydantic
@@ -34,15 +29,9 @@ sentry-sdk[fastapi]
 # Security
 slowapi  # Rate limiting
 
-# Development tools
-pytest
-pytest-asyncio
-httpx
-black
-flake8
-mypy
-coverage
-
 # Logging
 structlog
-colorama
+
+# Google Cloud integrations
+google-cloud-secret-manager
+google-cloud-logging
