@@ -1,6 +1,7 @@
 """
 Application configuration management using Pydantic settings.
 """
+import json
 from typing import List, Optional, Union
 from pydantic import field_validator, ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,12 +40,38 @@ class Settings(BaseSettings):
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+    def assemble_cors_origins(cls, v: Union[str, List[str], None]) -> List[str]:
+        """
+        Parse CORS origins from environment variable.
+        Supports JSON array format, comma-separated string, or fallback to default.
+        """
+        if v is None or v == "":
+            # Return default origins for development
+            return ["http://localhost:3000", "http://localhost:8000"]
+        
+        if isinstance(v, list):
             return v
-        raise ValueError(v)
+        
+        if isinstance(v, str):
+            # First try to parse as JSON array
+            if v.strip().startswith("[") and v.strip().endswith("]"):
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [str(item) for item in parsed]
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            
+            # If not JSON, treat as comma-separated string
+            if "," in v:
+                return [i.strip() for i in v.split(",") if i.strip()]
+            
+            # Single origin
+            if v.strip():
+                return [v.strip()]
+        
+        # Fallback to default
+        return ["http://localhost:3000", "http://localhost:8000"]
     
     @field_validator("DATABASE_URL", mode="after")
     @classmethod
