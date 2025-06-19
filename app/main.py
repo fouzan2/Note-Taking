@@ -65,6 +65,23 @@ async def api_exception_handler(request, exc: BaseAPIException):
     )
 
 
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc: Exception):
+    """
+    Handle general exceptions.
+    """
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": "An internal server error occurred",
+            }
+        }
+    )
+
+
 # Include API routers
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
@@ -78,7 +95,9 @@ async def root():
     return {
         "message": "Welcome to Note Taking API",
         "version": settings.VERSION,
-        "docs": f"{settings.API_V1_PREFIX}/docs"
+        "docs": f"{settings.API_V1_PREFIX}/docs",
+        "environment": settings.ENVIRONMENT,
+        "status": "healthy"
     }
 
 
@@ -88,18 +107,43 @@ async def health_check():
     """
     Health check endpoint with database and Redis status.
     """
-    health_status = {
-        "status": "healthy",
-        "version": settings.VERSION,
-        "services": {
-            "database": "healthy",  # TODO: Add actual DB health check
-            "redis": await redis_health_check()
+    try:
+        health_status = {
+            "status": "healthy",
+            "version": settings.VERSION,
+            "environment": settings.ENVIRONMENT,
+            "services": {
+                "database": "healthy",  # Basic status - could add actual DB ping
+                "redis": "not_configured"  # Default if Redis not available
+            }
         }
-    }
-    
-    # Determine overall health
-    redis_status = health_status["services"]["redis"]["status"]
-    if redis_status == "unhealthy" and settings.REDIS_URL:
-        health_status["status"] = "degraded"
-    
-    return health_status 
+        
+        # Check Redis health if configured
+        if settings.REDIS_URL:
+            try:
+                redis_status = await redis_health_check()
+                health_status["services"]["redis"] = redis_status
+                
+                # Determine overall health
+                if redis_status.get("status") == "unhealthy":
+                    health_status["status"] = "degraded"
+                    
+            except Exception as e:
+                health_status["services"]["redis"] = {
+                    "status": "unhealthy", 
+                    "error": str(e)
+                }
+                health_status["status"] = "degraded"
+        
+        return health_status
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "version": settings.VERSION,
+                "environment": settings.ENVIRONMENT,
+                "error": str(e)
+            }
+        ) 

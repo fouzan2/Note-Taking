@@ -36,7 +36,7 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-# Expose port
+# Expose port (will be overridden by Railway)
 EXPOSE 8000
 
 # Development command with auto-reload
@@ -68,8 +68,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-# Expose port
+# Expose port (will be overridden by Railway's PORT env var)
 EXPOSE 8000
 
-# Production command with multiple workers
-CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-"] 
+# Production command that respects Railway's PORT environment variable
+# Railway will override this command in railway.toml
+CMD gunicorn app.main:app -w ${RAILWAY_REPLICA_COUNT:-4} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --access-logfile - --error-logfile - --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50 

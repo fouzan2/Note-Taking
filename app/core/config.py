@@ -2,6 +2,7 @@
 Application configuration management using Pydantic settings.
 """
 import json
+import os
 from typing import List, Optional, Union, Any
 from pydantic import field_validator, ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,6 +24,10 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     DEBUG: bool = True
     
+    # Server Configuration
+    PORT: int = 8000  # Default port, Railway will override this
+    HOST: str = "0.0.0.0"
+    
     # Database Configuration
     DATABASE_URL: str = "sqlite+aiosqlite:///./note_taking.db"
     
@@ -31,6 +36,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Environment
+    ENVIRONMENT: str = "development"
     
     # Redis Configuration (optional)
     REDIS_URL: Optional[str] = None
@@ -44,6 +52,17 @@ class Settings(BaseSettings):
     
     # CORS Configuration - using Any to prevent automatic JSON parsing
     BACKEND_CORS_ORIGINS: Any = ["*"]
+    
+    @field_validator("PORT", mode="before")
+    @classmethod
+    def validate_port(cls, v: Any) -> int:
+        """
+        Validate and convert PORT to integer.
+        Railway provides PORT as string, we need to convert it.
+        """
+        if isinstance(v, str):
+            return int(v)
+        return v
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
