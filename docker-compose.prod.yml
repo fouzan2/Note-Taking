@@ -113,16 +113,7 @@ services:
     command: >
       sh -c "
         alembic upgrade head &&
-        gunicorn app.main:app 
-        -w 4 
-        -k uvicorn.workers.UvicornWorker 
-        --bind 0.0.0.0:8000 
-        --access-logfile - 
-        --error-logfile - 
-        --timeout 120 
-        --keep-alive 5 
-        --max-requests 1000 
-        --max-requests-jitter 50
+        gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --access-logfile - --error-logfile - --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50
       "
     logging:
       driver: "json-file"

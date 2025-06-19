@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user with specific UID/GID for development
+RUN groupadd -r -g 1000 appuser && useradd -r -u 1000 -g appuser appuser
 
 # Development stage
 FROM base as development

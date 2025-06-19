@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -11,7 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-note_taking_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     healthcheck:
@@ -53,10 +50,6 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-for-development}
       ENVIRONMENT: development
-    volumes:
-      - ./app:/app/app
-      - ./alembic:/app/alembic
-      - ./tests:/app/tests
     ports:
       - "8000:8000"
     depends_on:
@@ -88,8 +81,6 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/1
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/2
-    volumes:
-      - ./app:/app/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,8 +104,6 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/1
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/2
-    volumes:
-      - ./app:/app/app
     depends_on:
       postgres:
         condition: service_healthy

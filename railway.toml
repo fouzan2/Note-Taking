@@ -4,7 +4,7 @@ dockerfilePath = "Dockerfile"
 dockerContext = "."
 
 [deploy]
-startCommand = "sh -c 'alembic upgrade head && gunicorn app.main:app -w $RAILWAY_REPLICA_COUNT -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --access-logfile - --error-logfile -'"
+startCommand = "sh -c 'alembic upgrade head && gunicorn app.main:app -w ${RAILWAY_REPLICA_COUNT:-4} -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --access-logfile - --error-logfile -'"
 
 [healthcheck]
 type = "http"
