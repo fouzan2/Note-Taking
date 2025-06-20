@@ -38,7 +38,7 @@ slowapi  # Rate limiting
 pytest
 pytest-asyncio
 pytest-cov  # For test coverage reports
-httpx
+httpx>=0.23.0  # For testing FastAPI with ASGITransport
 black
 flake8
 mypy
