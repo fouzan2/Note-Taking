@@ -124,6 +124,7 @@ jobs:
       - name: Run Database Migrations
         run: |
           # Create or update migration job
+          # Note: DB_HOST uses Unix socket format for Cloud SQL (/cloudsql/project:region:instance)
           gcloud run jobs update run-migrations \
             --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
             --region $REGION \

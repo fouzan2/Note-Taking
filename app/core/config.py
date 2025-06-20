@@ -56,7 +56,13 @@ class Settings(BaseSettings):
     def construct_database_url(self) -> "Settings":
         """Construct DATABASE_URL from components if in production."""
         if self.ENVIRONMENT == "production" and self.DB_HOST and self.DB_NAME and self.DB_USER and self.DB_PASSWORD:
-            self.DATABASE_URL = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}/{self.DB_NAME}"
+            # For Cloud SQL Unix socket connections, use special format
+            if self.DB_HOST.startswith("/cloudsql/"):
+                # Unix socket format: empty host with socket path as query parameter
+                self.DATABASE_URL = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@/{self.DB_NAME}?host={self.DB_HOST}"
+            else:
+                # Standard TCP connection format
+                self.DATABASE_URL = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}/{self.DB_NAME}"
         return self
     
     # Test database (SQLite for testing)
@@ -158,5 +164,7 @@ print(f"🚀 Starting {settings.PROJECT_NAME} v{settings.VERSION}")
 print(f"🌍 Environment: {settings.ENVIRONMENT}")
 print(f"🔧 Port: {settings.PORT}")
 print(f"🗄️  Database: {'PostgreSQL' if 'postgresql' in settings.DATABASE_URL else 'SQLite'}")
+if settings.ENVIRONMENT == "production" and settings.DB_HOST and settings.DB_HOST.startswith("/cloudsql/"):
+    print(f"🔌 Using Cloud SQL Unix socket: {settings.DB_HOST}")
 print(f"📡 Redis: {'Configured' if settings.REDIS_URL else 'Not configured'}")
 print(f"🛡️  CORS Origins: {settings.BACKEND_CORS_ORIGINS}") 
