@@ -17,7 +17,7 @@ async def test_register_user(client: AsyncClient):
     }
     
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/register",
+        f"{settings.API_V1_STR}/auth/register",
         json=user_data
     )
     
@@ -36,11 +36,11 @@ async def test_register_duplicate_username(client: AsyncClient, test_user: dict)
     user_data = {
         "username": test_user["user"]["username"],
         "email": "different@example.com",
-        "password": "Password123!"
+        "password": "DifferentPassword123!"
     }
     
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/register",
+        f"{settings.API_V1_STR}/auth/register",
         json=user_data
     )
     
@@ -57,7 +57,7 @@ async def test_login_success(client: AsyncClient, test_user: dict):
     }
     
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/login",
+        f"{settings.API_V1_STR}/auth/login",
         data=login_data
     )
     
@@ -77,7 +77,7 @@ async def test_login_invalid_credentials(client: AsyncClient):
     }
     
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/login",
+        f"{settings.API_V1_STR}/auth/login",
         data=login_data
     )
     
@@ -89,7 +89,7 @@ async def test_login_invalid_credentials(client: AsyncClient):
 async def test_get_current_user(authenticated_client: AsyncClient, test_user: dict):
     """Test getting current user information."""
     response = await authenticated_client.get(
-        f"{settings.API_V1_PREFIX}/auth/me"
+        f"{settings.API_V1_STR}/auth/me"
     )
     
     assert response.status_code == 200
@@ -103,7 +103,7 @@ async def test_get_current_user(authenticated_client: AsyncClient, test_user: di
 async def test_unauthorized_access(client: AsyncClient):
     """Test accessing protected endpoint without authentication."""
     response = await client.get(
-        f"{settings.API_V1_PREFIX}/auth/me"
+        f"{settings.API_V1_STR}/auth/me"
     )
     
     assert response.status_code == 401 

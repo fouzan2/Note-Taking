@@ -88,7 +88,7 @@ async def test_user(client: AsyncClient) -> dict:
     
     # Register user
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/register",
+        f"{settings.API_V1_STR}/auth/register",
         json=user_data
     )
     assert response.status_code == 201
@@ -99,7 +99,7 @@ async def test_user(client: AsyncClient) -> dict:
         "password": user_data["password"]
     }
     response = await client.post(
-        f"{settings.API_V1_PREFIX}/auth/login",
+        f"{settings.API_V1_STR}/auth/login",
         data=login_data
     )
     assert response.status_code == 200
