@@ -61,6 +61,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug - Check Secrets
+        run: |
+          echo "Checking if required secrets are configured..."
+          echo "PROJECT_ID configured: ${{ secrets.GCP_PROJECT_ID != '' }}"
+          echo "GCP_SA_KEY configured: ${{ secrets.GCP_SA_KEY != '' }}"
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "ERROR: GCP_PROJECT_ID secret is not configured!"
+            echo "Please follow the setup guide in deploy/GITHUB_SECRETS_SETUP.md"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "ERROR: GCP_SA_KEY secret is not configured!"
+            echo "Please follow the setup guide in deploy/GITHUB_SECRETS_SETUP.md"
+            exit 1
+          fi
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:

@@ -28,6 +28,7 @@ First, ensure you have the following GCP services enabled:
 gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
   sql-component.googleapis.com \
   sqladmin.googleapis.com \
   redis.googleapis.com \
@@ -88,6 +89,33 @@ rm github-actions-key.json
 ```
 
 ## Troubleshooting
+
+### Artifact Registry Permission Error
+
+If you see this error when pushing Docker images:
+```
+denied: Permission "artifactregistry.repositories.uploadArtifacts" denied on resource "projects/***/locations/us/repositories/gcr.io"
+```
+
+This means your service account is missing Artifact Registry permissions. To fix:
+
+1. **Quick Fix for Existing Service Accounts:**
+   ```bash
+   cd deploy
+   ./update-service-account-permissions.sh
+   ```
+
+2. **Or manually grant the permission:**
+   ```bash
+   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+     --member="serviceAccount:github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/artifactregistry.writer"
+   ```
+
+3. **Ensure the API is enabled:**
+   ```bash
+   gcloud services enable artifactregistry.googleapis.com
+   ```
 
 ### Secret Not Found Error
 

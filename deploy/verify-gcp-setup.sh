@@ -57,6 +57,7 @@ echo "Checking required APIs..."
 REQUIRED_APIS=(
     "run.googleapis.com"
     "cloudbuild.googleapis.com"
+    "artifactregistry.googleapis.com"
     "sql-component.googleapis.com"
     "sqladmin.googleapis.com"
     "redis.googleapis.com"
@@ -96,6 +97,7 @@ if gcloud iam service-accounts describe "$SA_EMAIL" &> /dev/null; then
     REQUIRED_ROLES=(
         "roles/run.admin"
         "roles/storage.admin"
+        "roles/artifactregistry.writer"
         "roles/cloudsql.client"
         "roles/compute.networkUser"
         "roles/secretmanager.secretAccessor"

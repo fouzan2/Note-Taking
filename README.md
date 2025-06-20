@@ -343,6 +343,37 @@ make gcp-status      # Check service status
 make gcp-test        # Test production deployment
 ```
 
+### ⚠️ Important: GitHub Secrets Setup
+
+Before the GitHub Actions workflow can deploy to GCP, you **must** configure the required secrets:
+
+1. **Run the setup script** to create a service account:
+   ```bash
+   cd deploy
+   ./setup-gcp-service-account.sh
+   ```
+
+2. **Add these secrets to GitHub**:
+   - Go to Settings → Secrets and variables → Actions
+   - Add `GCP_PROJECT_ID`: Your Google Cloud project ID
+   - Add `GCP_SA_KEY`: The entire JSON content from `github-actions-key.json`
+
+3. **Delete the key file** after adding to GitHub:
+   ```bash
+   rm github-actions-key.json
+   ```
+
+**Without these secrets, deployment will fail with authentication errors!**
+
+For detailed instructions, see [deploy/GITHUB_SECRETS_SETUP.md](deploy/GITHUB_SECRETS_SETUP.md).
+
+### Common Deployment Issues
+
+If you encounter errors during deployment:
+- **Permission errors**: Run `deploy/update-service-account-permissions.sh`
+- **Verification**: Run `deploy/verify-gcp-setup.sh` to check your setup
+- **Comprehensive guide**: See [deploy/TROUBLESHOOTING.md](deploy/TROUBLESHOOTING.md)
+
 ### Cost Optimization
 
 The deployment is configured for cost efficiency:

@@ -21,6 +21,7 @@ echo "Enabling required GCP APIs..."
 gcloud services enable \
     run.googleapis.com \
     cloudbuild.googleapis.com \
+    artifactregistry.googleapis.com \
     sqladmin.googleapis.com \
     redis.googleapis.com \
     secretmanager.googleapis.com \

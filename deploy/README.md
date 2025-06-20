@@ -208,6 +208,22 @@ Adjust these in `cloudbuild.yaml` or deployment scripts as needed.
 
 ## Troubleshooting
 
+For a comprehensive troubleshooting guide covering all common deployment issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
+### Quick Fixes
+
+1. **Artifact Registry Permission Error**:
+   ```bash
+   # Quick fix for GCR push errors
+   ./update-service-account-permissions.sh
+   ```
+
+2. **Verify Complete Setup**:
+   ```bash
+   # Run verification script
+   ./verify-gcp-setup.sh
+   ```
+
 ### Common Issues
 
 1. **Database connection errors**:

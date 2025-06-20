@@ -24,6 +24,7 @@ echo "Granting IAM roles..."
 ROLES=(
     "roles/run.admin"                    # Deploy to Cloud Run
     "roles/storage.admin"                # Push images to GCR
+    "roles/artifactregistry.writer"      # Push images to Artifact Registry (used by GCR)
     "roles/cloudsql.client"              # Connect to Cloud SQL
     "roles/compute.networkUser"          # Use VPC connector
     "roles/secretmanager.secretAccessor" # Access secrets
