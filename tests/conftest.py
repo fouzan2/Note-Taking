@@ -3,6 +3,7 @@ Pytest configuration and fixtures.
 """
 import asyncio
 import pytest
+import pytest_asyncio
 from typing import AsyncGenerator
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -24,7 +25,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def test_engine():
     """Create test database engine."""
     engine = create_async_engine(
@@ -45,7 +46,7 @@ async def test_engine():
     await engine.dispose()
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     TestSessionLocal = async_sessionmaker(
@@ -61,7 +62,7 @@ async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def client(test_db) -> AsyncGenerator[AsyncClient, None]:
     """Create test client."""
     async def override_get_db():
@@ -75,7 +76,7 @@ async def client(test_db) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(client: AsyncClient) -> dict:
     """Create a test user and return user data with tokens."""
     user_data = {
@@ -109,7 +110,7 @@ async def test_user(client: AsyncClient) -> dict:
     }
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def authenticated_client(client: AsyncClient, test_user: dict) -> AsyncClient:
     """Create an authenticated test client."""
     client.headers["Authorization"] = f"Bearer {test_user['tokens']['access_token']}"
