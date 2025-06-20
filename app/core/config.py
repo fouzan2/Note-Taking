@@ -82,6 +82,22 @@ class Settings(BaseSettings):
         default="redis://redis:6379/0",
         description="Redis connection string"
     )
+    REDIS_HOST: Optional[str] = Field(default=None, description="Redis host IP or hostname")
+    REDIS_PASSWORD: Optional[str] = Field(default=None, description="Redis password")
+    REDIS_PORT: int = Field(default=6379, description="Redis port")
+    REDIS_DB: int = Field(default=0, description="Redis database number")
+    
+    @model_validator(mode="after")
+    def construct_redis_url(self) -> "Settings":
+        """Construct REDIS_URL from components if in production."""
+        if self.ENVIRONMENT == "production" and self.REDIS_HOST:
+            # For production, use Redis host IP
+            if self.REDIS_PASSWORD:
+                self.REDIS_URL = f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+            else:
+                self.REDIS_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return self
+    
     REDIS_CACHE_TTL: int = 3600  # 1 hour
     REDIS_MAX_CONNECTIONS: int = Field(default=50, description="Max Redis connections")
     REDIS_RETRY_ON_TIMEOUT: bool = Field(default=True, description="Retry on timeout")
@@ -167,4 +183,6 @@ print(f"🗄️  Database: {'PostgreSQL' if 'postgresql' in settings.DATABASE_UR
 if settings.ENVIRONMENT == "production" and settings.DB_HOST and settings.DB_HOST.startswith("/cloudsql/"):
     print(f"🔌 Using Cloud SQL Unix socket: {settings.DB_HOST}")
 print(f"📡 Redis: {'Configured' if settings.REDIS_URL else 'Not configured'}")
+if settings.ENVIRONMENT == "production" and settings.REDIS_HOST:
+    print(f"🔴 Redis Host: {settings.REDIS_HOST}:{settings.REDIS_PORT}")
 print(f"🛡️  CORS Origins: {settings.BACKEND_CORS_ORIGINS}") 

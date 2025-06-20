@@ -199,6 +199,19 @@ async def health_check():
             }
         }
         
+        # Check database health
+        try:
+            db: AsyncGenerator[AsyncSession, None] = get_db()
+            async with db as session:
+                await session.execute(text("SELECT 1"))
+                health_status["services"]["database"] = "healthy"
+        except Exception as e:
+            health_status["services"]["database"] = {
+                "status": "unhealthy",
+                "error": str(e)
+            }
+            health_status["status"] = "degraded"
+        
         # Check Redis health if configured
         if settings.REDIS_URL:
             try:
