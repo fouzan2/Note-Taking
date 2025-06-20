@@ -36,7 +36,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # Server Configuration
-    PORT: int = 8000  # Default port for local development
+    PORT: int = Field(
+        default=8000,
+        description="Server port (automatically set by Cloud Run in production)"
+    )
     HOST: str = "0.0.0.0"
     RELOAD: bool = True
     

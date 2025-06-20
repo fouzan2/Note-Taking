@@ -104,6 +104,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          # Note: PORT is automatically set by Cloud Run and should not be included in env vars
           gcloud run deploy $SERVICE_NAME \
             --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
             --region $REGION \
@@ -112,7 +113,7 @@ jobs:
             --add-cloudsql-instances ${PROJECT_ID}:${REGION}:note-taking-db \
             --vpc-connector note-taking-connector \
             --vpc-egress all-traffic \
-            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db,PORT=8080" \
+            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db" \
             --set-secrets "DB_PASSWORD=db-password:latest,SECRET_KEY=jwt-secret:latest,API_KEY=api-key:latest" \
             --max-instances 10 \
             --min-instances 1 \
@@ -130,7 +131,7 @@ jobs:
             --region $REGION \
             --add-cloudsql-instances ${PROJECT_ID}:${REGION}:note-taking-db \
             --vpc-connector note-taking-connector \
-            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db,PORT=8080" \
+            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db" \
             --set-secrets "DB_PASSWORD=db-password:latest,SECRET_KEY=jwt-secret:latest" \
             --command "alembic" \
             --args "upgrade,head" || \
@@ -139,7 +140,7 @@ jobs:
             --region $REGION \
             --add-cloudsql-instances ${PROJECT_ID}:${REGION}:note-taking-db \
             --vpc-connector note-taking-connector \
-            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db,PORT=8080" \
+            --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db" \
             --set-secrets "DB_PASSWORD=db-password:latest,SECRET_KEY=jwt-secret:latest" \
             --command "alembic" \
             --args "upgrade,head"
