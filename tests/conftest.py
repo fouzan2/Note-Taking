@@ -7,6 +7,7 @@ import pytest_asyncio
 from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import text
 
 from app.main import app
 from app.core.database import Base, get_db
@@ -58,7 +59,17 @@ async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
     )
     
     async with TestSessionLocal() as session:
+        # Clean all tables before each test
+        # Delete in order to respect foreign key constraints
+        await session.execute(text("DELETE FROM note_tags"))
+        await session.execute(text("DELETE FROM notes"))
+        await session.execute(text("DELETE FROM tags"))
+        await session.execute(text("DELETE FROM users"))
+        await session.commit()
+        
         yield session
+        
+        # Clean up after test
         await session.rollback()
 
 

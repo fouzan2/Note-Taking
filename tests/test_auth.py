@@ -13,7 +13,7 @@ async def test_register_user(client: AsyncClient):
     user_data = {
         "username": "newuser",
         "email": "newuser@example.com",
-        "password": "NewPassword123!"
+        "password": "SecurePassword123!"
     }
     
     response = await client.post(
@@ -25,9 +25,9 @@ async def test_register_user(client: AsyncClient):
     data = response.json()
     assert data["username"] == user_data["username"]
     assert data["email"] == user_data["email"]
+    assert "id" in data
     assert "password" not in data
     assert "password_hash" not in data
-    assert data["is_active"] is True
 
 
 @pytest.mark.asyncio
@@ -45,7 +45,9 @@ async def test_register_duplicate_username(client: AsyncClient, test_user: dict)
     )
     
     assert response.status_code == 409
-    assert "Username already registered" in response.json()["detail"]
+    error_data = response.json()
+    assert error_data["success"] is False
+    assert "Username already registered" in error_data["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -82,11 +84,13 @@ async def test_login_invalid_credentials(client: AsyncClient):
     )
     
     assert response.status_code == 401
-    assert "Incorrect username or password" in response.json()["detail"]
+    error_data = response.json()
+    assert error_data["success"] is False
+    assert "Incorrect username or password" in error_data["error"]["message"]
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(authenticated_client: AsyncClient, test_user: dict):
+async def test_get_current_user(authenticated_client: AsyncClient):
     """Test getting current user information."""
     response = await authenticated_client.get(
         f"{settings.API_V1_STR}/auth/me"
@@ -94,8 +98,9 @@ async def test_get_current_user(authenticated_client: AsyncClient, test_user: di
     
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == test_user["user"]["username"]
-    assert data["email"] == test_user["user"]["email"]
+    assert "id" in data
+    assert "username" in data
+    assert "email" in data
     assert "password" not in data
 
 

@@ -35,7 +35,7 @@ async def register(
         ConflictError: If username or email already exists
     """
     user = await auth_service.create_user(db, user_data)
-    return UserResponse.from_orm(user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/login", response_model=Token)
@@ -88,4 +88,4 @@ async def get_current_user_info(
     Returns:
         User information
     """
-    return UserResponse.from_orm(current_user) 
+    return UserResponse.model_validate(current_user) 
