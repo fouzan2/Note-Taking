@@ -38,11 +38,14 @@ async def create_note(
     """
     note = await note_service.create_note(db, note_data, current_user.id)
     
+    # Convert to Pydantic model for proper serialization
+    note_response = NoteResponse.from_orm(note)
+    
     # Cache the created note
     cache_key = f"note:{note.id}:user:{current_user.id}"
-    await RedisCache.set(cache_key, note.__dict__, ttl=600)  # Cache for 10 minutes
+    await RedisCache.set(cache_key, note_response.dict(), ttl=600)  # Cache for 10 minutes
     
-    return NoteResponse.from_orm(note)
+    return note_response
 
 
 @router.get("/", response_model=NoteListResponse)
@@ -166,10 +169,13 @@ async def get_note(
     # Get from database
     note = await note_service.get_note_by_id(db, note_id, current_user.id)
     
-    # Cache the note for 10 minutes
-    await RedisCache.set(cache_key, note.__dict__, ttl=600)
+    # Convert to Pydantic model for proper serialization
+    note_response = NoteResponse.from_orm(note)
     
-    return NoteResponse.from_orm(note)
+    # Cache the note for 10 minutes
+    await RedisCache.set(cache_key, note_response.dict(), ttl=600)
+    
+    return note_response
 
 
 @router.put("/{note_id}", response_model=NoteResponse)
@@ -198,6 +204,9 @@ async def update_note(
     """
     note = await note_service.update_note(db, note_id, note_update, current_user.id)
     
+    # Convert to Pydantic model for proper serialization
+    note_response = NoteResponse.from_orm(note)
+    
     # Invalidate caches for this note and user's note lists
     cache_key = f"note:{note_id}:user:{current_user.id}"
     await RedisCache.delete(cache_key)
@@ -206,9 +215,9 @@ async def update_note(
     await RedisCache.clear_pattern(f"notes:user:{current_user.id}:*")
     
     # Cache the updated note
-    await RedisCache.set(cache_key, note.__dict__, ttl=600)
+    await RedisCache.set(cache_key, note_response.dict(), ttl=600)
     
-    return NoteResponse.from_orm(note)
+    return note_response
 
 
 @router.delete("/{note_id}", status_code=204)
