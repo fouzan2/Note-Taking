@@ -211,62 +211,63 @@ note_taking/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI application initialization
-│   ├── core/
-│   │   ├── config.py        # Settings and configuration
-│   │   ├── security.py      # Authentication and authorization
-│   │   └── database.py      # Database connection and session management
-│   ├── models/
 │   │   ├── __init__.py
-│   │   ├── user.py          # User SQLAlchemy model
-│   │   ├── note.py          # Note SQLAlchemy model
-│   │   └── tag.py           # Tag SQLAlchemy model
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   ├── user.py          # User Pydantic models
-│   │   ├── note.py          # Note Pydantic models
-│   │   └── tag.py           # Tag Pydantic models
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── deps.py          # Dependency injection functions
-│   │   └── v1/
+│   │   ├── core/
+│   │   │   ├── config.py        # Settings and configuration
+│   │   │   ├── security.py      # Authentication and authorization
+│   │   │   └── database.py      # Database connection and session management
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py          # User SQLAlchemy model
+│   │   │   ├── note.py          # Note SQLAlchemy model
+│   │   │   └── tag.py           # Tag SQLAlchemy model
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py          # User Pydantic models
+│   │   │   ├── note.py          # Note Pydantic models
+│   │   │   └── tag.py           # Tag Pydantic models
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── deps.py          # Dependency injection functions
+│   │   │   └── v1/
+│   │   │       ├── __init__.py
+│   │   │       ├── auth.py      # Authentication endpoints
+│   │   │       ├── notes.py     # Note management endpoints
+│   │   │       └── tags.py      # Tag management endpoints
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth_service.py  # Authentication business logic
+│   │   │   ├── note_service.py  # Note management business logic
+│   │   │   └── tag_service.py   # Tag management business logic
+│   │   └── utils/
 │   │       ├── __init__.py
-│   │       ├── auth.py      # Authentication endpoints
-│   │       ├── notes.py     # Note management endpoints
-│   │       └── tags.py      # Tag management endpoints
-│   ├── services/
+│   │       └── exceptions.py    # Custom exception classes
+│   ├── tests/
 │   │   ├── __init__.py
-│   │   ├── auth_service.py  # Authentication business logic
-│   │   ├── note_service.py  # Note management business logic
-│   │   └── tag_service.py   # Tag management business logic
-│   └── utils/
-│       ├── __init__.py
-│       └── exceptions.py    # Custom exception classes
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py          # Pytest configuration and fixtures
-│   └── test_auth.py         # Authentication tests
-├── alembic/
-│   ├── env.py               # Alembic environment configuration
-│   └── script.py.mako       # Migration template
-├── deploy/                  # GCP deployment files
-│   ├── setup-gcp.sh         # Infrastructure setup script
-│   ├── deploy.sh            # Deployment script
-│   ├── cloud-run-service.yaml # Cloud Run configuration
-│   ├── env.production.example # Production environment example
-│   └── README.md            # Deployment documentation
-├── .github/
-│   └── workflows/
-│       └── deploy-gcp.yml   # GitHub Actions deployment workflow
-├── docker-compose.yml       # Development environment
-├── Dockerfile               # Development Docker image
-├── Dockerfile.production    # Production Docker image
-├── cloudbuild.yaml         # Google Cloud Build configuration
-├── Makefile                # Convenience commands
-├── alembic.ini            # Alembic configuration
-├── requirements.txt       # Python dependencies
-├── requirements-prod.txt  # Production dependencies (without Celery)
-├── .env.development.example # Development environment example
-└── README.md              # This file
+│   │   ├── conftest.py          # Pytest configuration and fixtures
+│   │   └── test_auth.py         # Authentication tests
+│   ├── alembic/
+│   │   ├── env.py               # Alembic environment configuration
+│   │   └── script.py.mako       # Migration template
+│   ├── deploy/                  # GCP deployment files
+│   │   ├── setup-gcp.sh         # Infrastructure setup script
+│   │   ├── deploy.sh            # Deployment script
+│   │   ├── cloud-run-service.yaml # Cloud Run configuration
+│   │   ├── env.production.example # Production environment example
+│   │   └── README.md            # Deployment documentation
+│   ├── .github/
+│   │   └── workflows/
+│   │       └── deploy-gcp.yml   # GitHub Actions deployment workflow
+│   ├── docker-compose.yml       # Development environment
+│   ├── Dockerfile               # Development Docker image
+│   ├── Dockerfile.production    # Production Docker image
+│   ├── cloudbuild.yaml         # Google Cloud Build configuration
+│   ├── Makefile                # Convenience commands
+│   ├── alembic.ini            # Alembic configuration
+│   ├── requirements.txt       # Python dependencies
+│   ├── requirements-prod.txt  # Production dependencies (without Celery)
+│   ├── .env.development.example # Development environment example
+│   └── README.md              # This file
 ```
 
 ## 🐳 Docker Commands
@@ -439,6 +440,32 @@ Key environment variables for development (see `.env.development.example`):
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📊 Code Coverage with Codecov
+
+To enable code coverage reporting in GitHub Actions:
+
+1. **Sign up for Codecov**:
+   - Go to [codecov.io](https://codecov.io)
+   - Sign in with your GitHub account
+   - Add your repository
+
+2. **Get your Codecov token**:
+   - In Codecov, go to your repository settings
+   - Copy the repository upload token
+
+3. **Add token to GitHub Secrets**:
+   - Go to your GitHub repository settings
+   - Navigate to Settings > Secrets and variables > Actions
+   - Click "New repository secret"
+   - Name: `CODECOV_TOKEN`
+   - Value: Your Codecov token from step 2
+
+4. **Push changes**:
+   - The workflow is already configured to use the token
+   - Coverage reports will now upload successfully without rate limiting
+
+> **Note**: The workflow has been updated with `fail_ci_if_error: false` temporarily. Once you add the `CODECOV_TOKEN` secret, you can change this back to `true` in `.github/workflows/deploy-gcp.yml` to ensure coverage uploads are working correctly.
 
 ## 🙏 Acknowledgments
 
