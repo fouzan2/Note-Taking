@@ -37,6 +37,7 @@ slowapi  # Rate limiting
 # Development tools
 pytest
 pytest-asyncio
+pytest-cov  # For test coverage reports
 httpx
 black
 flake8
