@@ -115,6 +115,7 @@ jobs:
             --vpc-egress all-traffic \
             --set-env-vars "REDIS_HOST=${{ steps.redis.outputs.redis_host }},ENVIRONMENT=production,DB_HOST=/cloudsql/${PROJECT_ID}:${REGION}:note-taking-db,DB_USER=noteuser,DB_NAME=note_taking_db" \
             --set-secrets "DB_PASSWORD=db-password:latest,SECRET_KEY=jwt-secret:latest,API_KEY=api-key:latest" \
+            --port 8080 \
             --max-instances 10 \
             --min-instances 1 \
             --memory 1Gi \

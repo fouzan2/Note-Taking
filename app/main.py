@@ -9,6 +9,7 @@ from typing import AsyncGenerator, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 import logging
+import asyncio
 
 from app.core.config import settings
 from app.api.v1 import api_router
@@ -200,13 +201,30 @@ async def health_check():
         
         # Check database health
         try:
-            async with AsyncSessionLocal() as session:
-                await session.execute(text("SELECT 1"))
+            # Try to connect with a short retry
+            connected = False
+            for attempt in range(3):
+                try:
+                    async with AsyncSessionLocal() as session:
+                        await session.execute(text("SELECT 1"))
+                        connected = True
+                        break
+                except Exception as e:
+                    if attempt < 2:
+                        await asyncio.sleep(0.5)
+                    else:
+                        raise e
+            
+            if connected:
                 health_status["services"]["database"] = "healthy"
         except Exception as e:
+            error_msg = str(e)
+            # Provide more context for connection errors
+            if "Connection refused" in error_msg:
+                error_msg = f"Database connection refused. Check Cloud SQL configuration. Error: {error_msg}"
             health_status["services"]["database"] = {
                 "status": "unhealthy",
-                "error": str(e)
+                "error": error_msg
             }
             health_status["status"] = "degraded"
         

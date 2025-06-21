@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     Application settings loaded from environment variables.
     """
     model_config = SettingsConfigDict(
-        env_file=".env.development",
+        env_file=".env.development" if os.getenv("ENVIRONMENT", "development") == "development" else None,
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"  # Ignore extra environment variables
@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Note Taking API"
     VERSION: str = "1.0.0"
+    
+    # Environment - Must be defined early for validators
+    ENVIRONMENT: str = Field(default="development", description="Current environment")
     
     # Security
     SECRET_KEY: str = Field(
@@ -58,21 +61,25 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def construct_database_url(self) -> "Settings":
         """Construct DATABASE_URL from components if in production."""
+        # Debug print
+        print(f"🔍 Database URL Construction: ENV={self.ENVIRONMENT}, DB_HOST={self.DB_HOST}, DB_USER={self.DB_USER}, DB_NAME={self.DB_NAME}, Has Password={bool(self.DB_PASSWORD)}")
+        
         if self.ENVIRONMENT == "production" and self.DB_HOST and self.DB_NAME and self.DB_USER and self.DB_PASSWORD:
             # For Cloud SQL Unix socket connections, use special format
             if self.DB_HOST.startswith("/cloudsql/"):
                 # Unix socket format: empty host with socket path as query parameter
                 self.DATABASE_URL = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@/{self.DB_NAME}?host={self.DB_HOST}"
+                print(f"✅ Constructed Cloud SQL Unix socket URL")
             else:
                 # Standard TCP connection format
                 self.DATABASE_URL = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}/{self.DB_NAME}"
+                print(f"✅ Constructed standard TCP database URL")
+        else:
+            print(f"⚠️  Using default DATABASE_URL: {self.DATABASE_URL.split('@')[1] if '@' in self.DATABASE_URL else 'N/A'}")
         return self
     
     # Test database (SQLite for testing)
     TEST_DATABASE_URL: str = "sqlite+aiosqlite:///./test.db"
-    
-    # Environment
-    ENVIRONMENT: str = Field(default="development", description="Current environment")
     
     # Debug mode - automatically set based on environment
     @property
@@ -183,6 +190,12 @@ print(f"🚀 Starting {settings.PROJECT_NAME} v{settings.VERSION}")
 print(f"🌍 Environment: {settings.ENVIRONMENT}")
 print(f"🔧 Port: {settings.PORT}")
 print(f"🗄️  Database: {'PostgreSQL' if 'postgresql' in settings.DATABASE_URL else 'SQLite'}")
+if settings.ENVIRONMENT == "production":
+    # Debug database configuration (mask password)
+    if settings.DB_HOST and settings.DB_USER and settings.DB_NAME:
+        masked_url = settings.DATABASE_URL.replace(settings.DB_PASSWORD, "***") if settings.DB_PASSWORD else settings.DATABASE_URL
+        print(f"📊 Database Config: HOST={settings.DB_HOST}, USER={settings.DB_USER}, DB={settings.DB_NAME}")
+        print(f"🔗 Database URL format: {masked_url}")
 if settings.ENVIRONMENT == "production" and settings.DB_HOST and settings.DB_HOST.startswith("/cloudsql/"):
     print(f"🔌 Using Cloud SQL Unix socket: {settings.DB_HOST}")
 print(f"📡 Redis: {'Configured' if settings.REDIS_URL else 'Not configured'}")
