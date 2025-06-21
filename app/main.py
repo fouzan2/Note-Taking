@@ -13,7 +13,7 @@ import logging
 from app.core.config import settings
 from app.api.v1 import api_router
 from app.utils.exceptions import BaseAPIException
-from app.core.database import get_db
+from app.core.database import get_db, AsyncSessionLocal
 from app.core.redis import init_redis, close_redis, redis_health_check
 
 # Set up logging
@@ -26,8 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context manager."""
     try:
         # Test database connection
-        db: AsyncGenerator[AsyncSession, None] = get_db()
-        async with db as session:
+        async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
             logger.info("Database connection successful")
     except Exception as e:
@@ -201,8 +200,7 @@ async def health_check():
         
         # Check database health
         try:
-            db: AsyncGenerator[AsyncSession, None] = get_db()
-            async with db as session:
+            async with AsyncSessionLocal() as session:
                 await session.execute(text("SELECT 1"))
                 health_status["services"]["database"] = "healthy"
         except Exception as e:
