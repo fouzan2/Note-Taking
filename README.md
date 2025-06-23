@@ -22,7 +22,6 @@ A robust and scalable RESTful API for managing personal notes with tag support, 
 - **Error Handling**: Custom exception classes with proper HTTP status codes
 - **Docker Support**: Full Docker and Docker Compose configuration
 - **Redis Caching**: Redis for session storage and caching
-- **Background Tasks**: Celery for asynchronous task processing
 
 ## 📋 Requirements
 
@@ -167,7 +166,7 @@ make test
 docker-compose exec app pytest tests/ -v --cov=app --cov-report=html
 
 # Run specific test file
-docker-compose exec app pytest tests/test_notes.py -v
+docker-compose exec app pytest tests/test_auth.py -v
 ```
 
 ### Code Quality
@@ -197,8 +196,7 @@ note_taking/
 │   │       ├── __init__.py
 │   │       ├── auth.py          # Authentication endpoints
 │   │       ├── notes.py         # Note CRUD endpoints
-│   │       ├── tags.py          # Tag management endpoints
-│   │       └── users.py         # User management endpoints
+│   │       └── tags.py          # Tag management endpoints
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── config.py            # Application configuration
@@ -207,7 +205,6 @@ note_taking/
 │   │   └── security.py          # Authentication and security utilities
 │   ├── models/
 │   │   ├── __init__.py
-│   │   ├── base.py              # Base model classes
 │   │   ├── user.py              # User SQLAlchemy model
 │   │   ├── note.py              # Note SQLAlchemy model
 │   │   └── tag.py               # Tag SQLAlchemy model
@@ -215,35 +212,35 @@ note_taking/
 │   │   ├── __init__.py
 │   │   ├── user.py              # User Pydantic schemas
 │   │   ├── note.py              # Note Pydantic schemas
-│   │   ├── tag.py               # Tag Pydantic schemas
-│   │   └── token.py             # Authentication token schemas
+│   │   └── tag.py               # Tag Pydantic schemas
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── auth_service.py      # Authentication business logic
 │   │   ├── note_service.py      # Note management business logic
-│   │   ├── tag_service.py       # Tag management business logic
-│   │   └── user_service.py      # User management business logic
+│   │   └── tag_service.py       # Tag management business logic
 │   └── utils/
 │       ├── __init__.py
-│       ├── exceptions.py        # Custom exception classes
-│       └── helpers.py           # Utility functions
+│       └── exceptions.py        # Custom exception classes
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py              # Pytest configuration and fixtures
-│   ├── test_auth.py             # Authentication tests
-│   ├── test_notes.py            # Note management tests
-│   ├── test_tags.py             # Tag management tests
-│   └── test_users.py            # User management tests
+│   └── test_auth.py             # Authentication tests
 ├── alembic/
 │   ├── env.py                   # Alembic environment configuration
 │   └── versions/                # Database migration files
+├── nginx/                       # Nginx configuration
+│   └── conf.d/
 ├── docker-compose.yml           # Development environment
 ├── Dockerfile                   # Application Docker image
 ├── Makefile                     # Convenience commands
 ├── alembic.ini                  # Alembic configuration
 ├── requirements.txt             # Python dependencies
+├── pytest.ini                   # Pytest configuration
+├── test_api_curl.sh            # API testing script
+├── API_TEST_RESULTS.md         # API test results documentation
 ├── .env.development             # Development environment variables
-├── .env.production              # Production environment variables
+├── .dockerignore               # Docker ignore patterns
+├── .gitignore                  # Git ignore patterns
 └── README.md                    # Project documentation
 ```
 
@@ -270,11 +267,11 @@ BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
 
 ### Production Environment
 
-For production deployment, update `.env.production` with secure values:
+For production deployment, create a `.env.production` file based on `.env.development`:
 
 ```bash
-# Copy and modify production environment
-cp .env.production .env.production.local
+# Copy and modify for production
+cp .env.development .env.production
 # Edit with your production values
 ```
 
@@ -315,12 +312,9 @@ docker-compose logs -f redis
 
 ## 🧪 Testing
 
-The project includes comprehensive tests:
+The project includes authentication tests:
 
-- **Unit Tests**: Test individual components
-- **Integration Tests**: Test API endpoints
-- **Database Tests**: Test database operations
-- **Authentication Tests**: Test security features
+- **Authentication Tests**: Test user registration and login
 
 ```bash
 # Run all tests
