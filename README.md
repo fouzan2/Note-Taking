@@ -265,16 +265,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
 ```
 
-### Production Environment
-
-For production deployment, create a `.env.production` file based on `.env.development`:
-
-```bash
-# Copy and modify for production
-cp .env.development .env.production
-# Edit with your production values
-```
-
 ## 🔒 Security Features
 
 - **JWT Authentication**: Secure token-based authentication
