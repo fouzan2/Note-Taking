@@ -2,7 +2,7 @@
 API dependencies for authentication and common functionality.
 """
 from typing import Optional
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -94,9 +94,8 @@ class PaginationParams:
     
     def __init__(
         self,
-        page: int = 1,
-        per_page: int = 20,
-        max_per_page: int = 100
+        page: int = Query(1, ge=1, description="Page number"),
+        per_page: int = Query(20, ge=1, le=100, description="Items per page")
     ):
         """
         Initialize pagination parameters.
@@ -104,15 +103,7 @@ class PaginationParams:
         Args:
             page: Page number (1-based)
             per_page: Items per page
-            max_per_page: Maximum allowed items per page
         """
-        if page < 1:
-            page = 1
-        if per_page < 1:
-            per_page = 20
-        if per_page > max_per_page:
-            per_page = max_per_page
-            
         self.page = page
         self.per_page = per_page
         self.offset = (page - 1) * per_page

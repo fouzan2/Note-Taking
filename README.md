@@ -61,7 +61,6 @@ This will start:
 - **PostgreSQL database** on localhost:5432
 - **Redis** on localhost:6379
 - **pgAdmin** on http://localhost:5050
-- **Flower (Celery monitoring)** on http://localhost:5555
 
 ### 4. Verify Installation
 
@@ -82,7 +81,6 @@ curl http://localhost:8000/health
 - **Alternative Docs**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/health
 - **pgAdmin**: http://localhost:5050 (admin@example.com / admin)
-- **Flower**: http://localhost:5555
 
 ## 📚 API Usage
 
@@ -158,15 +156,19 @@ docker-compose exec app alembic revision --autogenerate -m "Description"
 
 ### Testing
 
+The project includes authentication tests. However, tests are excluded from the Docker container by `.dockerignore`.
+
+To run tests:
+
 ```bash
-# Run all tests
-make test
+# Option 1: Run tests locally
+pip install -r requirements.txt
+pytest tests/ -v
 
-# Run tests with coverage
-docker-compose exec app pytest tests/ -v --cov=app --cov-report=html
-
-# Run specific test file
-docker-compose exec app pytest tests/test_auth.py -v
+# Option 2: Temporarily enable tests in Docker
+# 1. Comment out 'tests/' line in .dockerignore
+# 2. Rebuild the container: make build
+# 3. Run tests: make test
 ```
 
 ### Code Quality
@@ -298,23 +300,6 @@ make logs
 docker-compose logs -f app
 docker-compose logs -f postgres
 docker-compose logs -f redis
-```
-
-## 🧪 Testing
-
-The project includes authentication tests:
-
-- **Authentication Tests**: Test user registration and login
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage report
-docker-compose exec app pytest --cov=app --cov-report=html tests/
-
-# View coverage report
-open htmlcov/index.html
 ```
 
 ## 🤝 Contributing
