@@ -77,8 +77,8 @@ curl http://localhost:8000/health
 
 ### 5. Access the API
 
-- **API Documentation**: http://localhost:8000/docs
-- **Alternative Docs**: http://localhost:8000/redoc
+- **API Documentation**: http://localhost:8000/api/v1/docs
+- **Alternative Docs**: http://localhost:8000/api/v1/redoc
 - **Health Check**: http://localhost:8000/health
 - **pgAdmin**: http://localhost:5050 (admin@example.com / admin)
 
