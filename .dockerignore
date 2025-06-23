@@ -42,7 +42,7 @@ docker-compose.*.yml
 *.sqlite
 *.db
 .env.local
-.env.development
+# .env.development  # Commented out - needed by docker-compose
 .env.test
 
 # Documentation

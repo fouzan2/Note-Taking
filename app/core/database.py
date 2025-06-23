@@ -19,29 +19,15 @@ if settings.DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False}  # Required for SQLite
     )
 else:
-    # PostgreSQL and other databases
-    connect_args = {}
-    
-    # For Cloud SQL Unix socket connections
-    if settings.ENVIRONMENT == "production" and settings.DB_HOST and settings.DB_HOST.startswith("/cloudsql/"):
-        # Ensure proper socket permissions and connection settings
-        connect_args = {
-            "server_settings": {
-                "application_name": settings.PROJECT_NAME,
-                "jit": "off"
-            },
-            "command_timeout": 60,
-            "ssl": None  # Disable SSL for Unix socket connections
-        }
-    
+    # PostgreSQL configuration for Docker
     engine = create_async_engine(
         settings.DATABASE_URL,
         echo=settings.DEBUG,
         future=True,
         pool_size=10,
+        max_overflow=20,
         pool_pre_ping=True,
-        pool_recycle=3600,
-        connect_args=connect_args
+        pool_recycle=3600
     )
 
 # Create async session factory

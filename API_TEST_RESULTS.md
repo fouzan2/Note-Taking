@@ -1,4 +1,4 @@
-# Google Cloud API Test Results
+# Local API Test Results
 
 ## Base URL
 `https://note-taking-api-ne3atfgzsa-uc.a.run.app`
@@ -141,7 +141,7 @@ curl https://note-taking-api-ne3atfgzsa-uc.a.run.app/api/v1/tags/ \
 
 ## Test Scripts Available
 
-1. **Python Test Suite**: `test_api_gcloud.py` - Comprehensive Python-based test suite
+1. **Python Test Suite**: `test_api_localhost.py` - Comprehensive Python-based test suite
 2. **Bash/Curl Script**: `test_api_curl.sh` - Quick curl-based testing script
 
 Both scripts are available in the repository for testing the deployed API. 

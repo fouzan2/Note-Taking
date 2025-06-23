@@ -74,7 +74,6 @@ test_note_taking.db
 # Google Cloud Platform
 *.json  # Service account keys
 github-sa-key.json
-gcp-key.json
 service-account-key.json
 
 # Backup files
@@ -83,4 +82,3 @@ backup_*.sql
 
 # Deployment temporary files
 deploy/*.log
-.gcloud/ 

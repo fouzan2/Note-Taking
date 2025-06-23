@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Google Cloud API Test Script using curl
-# Base URL for the deployed API
-BASE_URL="https://note-taking-api-ne3atfgzsa-uc.a.run.app"
+# Local API Test Script using curl
+# Base URL for the local development API
+BASE_URL="http://localhost:8000"
 API_URL="${BASE_URL}/api/v1"
 
 # Colors for output
@@ -17,7 +17,7 @@ TEST_EMAIL="test_$(date +%s)@example.com"
 TEST_PASSWORD="TestPassword123!"
 
 echo -e "${YELLOW}========================================${NC}"
-echo -e "${YELLOW}Google Cloud API Test - Curl Commands${NC}"
+echo -e "${YELLOW}Local API Test - Curl Commands${NC}"
 echo -e "${YELLOW}========================================${NC}"
 echo -e "Base URL: ${BASE_URL}\n"
 

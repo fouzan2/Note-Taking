@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 import logging
 import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine
+import os
 
 from app.core.config import settings
 from app.api.v1 import api_router
@@ -163,7 +165,7 @@ async def read_root() -> dict[str, Any]:
     description="Check the health status of the API and its dependencies",
     response_description="Health status of the API",
     tags=["Health"],
-    status_code=200,  # Return 200 for health checks
+    status_code=200,
     responses={
         200: {
             "description": "API is healthy",
@@ -201,27 +203,14 @@ async def health_check():
         
         # Check database health
         try:
-            # Try to connect with a short retry
-            connected = False
-            for attempt in range(3):
-                try:
-                    async with AsyncSessionLocal() as session:
-                        await session.execute(text("SELECT 1"))
-                        connected = True
-                        break
-                except Exception as e:
-                    if attempt < 2:
-                        await asyncio.sleep(0.5)
-                    else:
-                        raise e
-            
-            if connected:
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(text("SELECT 1"))
+                row = result.fetchone()
+                logger.info(f"Database health check successful: {row}")
                 health_status["services"]["database"] = "healthy"
         except Exception as e:
-            error_msg = str(e)
-            # Provide more context for connection errors
-            if "Connection refused" in error_msg:
-                error_msg = f"Database connection refused. Check Cloud SQL configuration. Error: {error_msg}"
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            logger.error(f"Database health check failed: {error_msg}")
             health_status["services"]["database"] = {
                 "status": "unhealthy",
                 "error": error_msg
@@ -249,12 +238,12 @@ async def health_check():
         
     except Exception as e:
         return JSONResponse(
-            status_code=200,  # Return 200 for Railway health checks
+            status_code=500,
             content={
-                "status": "basic",
+                "status": "error",
                 "version": settings.VERSION,
                 "environment": settings.ENVIRONMENT,
-                "message": "Basic health check passed",
-                "warning": str(e)
+                "message": "Health check failed",
+                "error": str(e)
             }
         ) 
