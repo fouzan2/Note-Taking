@@ -65,66 +65,6 @@ services:
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
-  # Celery Worker
-  celery:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: note_taking_celery
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-noteuser}:${POSTGRES_PASSWORD:-notepassword}@postgres:5432/${POSTGRES_DB:-note_taking_db}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/1
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/2
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - note_network
-    command: celery -A app.core.celery_app worker --loglevel=info
-
-  # Celery Beat (Scheduler)
-  celery-beat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: note_taking_celery_beat
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-noteuser}:${POSTGRES_PASSWORD:-notepassword}@postgres:5432/${POSTGRES_DB:-note_taking_db}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/1
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/2
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - note_network
-    command: celery -A app.core.celery_app beat --loglevel=info
-
-  # Flower (Celery Web UI)
-  flower:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: note_taking_flower
-    environment:
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/1
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/2
-    ports:
-      - "5555:5555"
-    depends_on:
-      - redis
-    networks:
-      - note_network
-    command: celery -A app.core.celery_app flower
-
   # pgAdmin (Database Management)
   pgadmin:
     image: dpage/pgadmin4:latest

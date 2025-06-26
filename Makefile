@@ -23,7 +23,7 @@ up:
 	docker-compose up -d
 	@echo "Development environment started!"
 	@echo "API: http://localhost:8000"
-	@echo "API Docs: http://localhost:8000/docs"
+	@echo "API Docs: http://localhost:8000/api/v1/docs"
 	@echo "pgAdmin: http://localhost:5050"
 	@echo "Flower: http://localhost:5555"
 
